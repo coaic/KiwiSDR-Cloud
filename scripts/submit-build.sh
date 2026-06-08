@@ -2,7 +2,7 @@
 # submit-build.sh — submit one KiwiSDR Vivado build as a Cloud Batch job.
 #
 # Usage:   ./submit-build.sh <git-url> [git-ref] [rx-config]
-# Example: ./submit-build.sh git@github.com:coaic/KiwiSDR.git master rx44
+# Example: ./submit-build.sh https://github.com/coaic/KiwiSDR.git master rx44
 #
 # rx-config: rx44 (default), rx82, rx33, rx14
 #            Omit to build all 4 configs sequentially in one job.
@@ -23,6 +23,9 @@ JOB_NAME="kiwisdr-$(date +%Y%m%d-%H%M%S)"
 BUCKET="${PROJECT_ID}-fpga-artifacts"
 SA_EMAIL="fpga-builder@${PROJECT_ID}.iam.gserviceaccount.com"
 IMAGE_URI="projects/${PROJECT_ID}/global/images/family/vivado-kiwisdr"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PATCH_SCRIPT="${SCRIPT_DIR}/patch_make_proj.py"
+PATCH_GCS="gs://${BUCKET}/tools/patch_make_proj.py"
 
 case "${RX_CFG}" in
   rx44) TCL_FLAG="--rx4_wf4" ;;
@@ -33,12 +36,12 @@ case "${RX_CFG}" in
   *)    echo "Unknown rx-config: ${RX_CFG}. Use rx44, rx82, rx33, rx14, or all."; exit 1 ;;
 esac
 
+# Upload patch script to GCS so the build VM can download it.
+# Uploaded every submission so the VM always runs the current version.
+echo "Uploading patch_make_proj.py -> ${PATCH_GCS}"
+gsutil cp "${PATCH_SCRIPT}" "${PATCH_GCS}"
+
 # ---- Build script that runs on the VM ----------------------------------------
-#
-# make_proj.tcl normally relies on --regen_ip to add IP XCI files to the project,
-# but that flag is broken in Vivado 2024.2. The patch script below injects the
-# equivalent step (GUI step 8 from README.Vivado.2024.2.txt) directly into
-# make_proj.tcl before Vivado runs. See docs/vivado-batch-ip-handling.md.
 
 read -r -d '' BUILD_SCRIPT <<EOF || true
 #!/bin/bash
@@ -66,6 +69,9 @@ gcs_upload() {
 
 echo "=== KiwiSDR build: repo=${GIT_REPO} ref=${GIT_REF} cfg=${RX_CFG} ==="
 
+# Download patch script from GCS
+gsutil cp "${PATCH_GCS}" /tmp/patch_make_proj.py
+
 cd /tmp
 rm -rf project
 git clone --depth=1 --branch "${GIT_REF}" "${GIT_REPO}" project
@@ -78,38 +84,10 @@ cp /tmp/project/verilog/kiwi.tcl /tmp/project/verilog/make_proj.tcl /build/
 # Patch 1: -force flag so create_project tolerates the pre-restored IP cache dir
 sed -i 's/create_project \\\${project_name} \\.\/\\\${project_name}/create_project -force \\\${project_name} .\\/\\\${project_name}/' /build/make_proj.tcl
 
-# Patch 2: inject IP XCI import block — written inline so this repo has no
-# dependency on the KiwiSDR fork. See docs/vivado-batch-ip-handling.md for why.
-cat > /tmp/patch_make_proj.py << 'PYEOF'
-import sys
-path = sys.argv[1]
-with open(path) as f:
-    content = f.read()
-MARKER = (
-    'if {[string equal \$proj_create "yes"]} {\n'
-    '    add_files -norecurse -fileset [get_filesets sources_1] \$files\n'
-    '}'
-)
-INJECT = """
-# Import IP XCI files from import_ip/ (cloud batch equivalent of GUI step 8)
-if {[string equal \$proj_create "yes"]} {
-    foreach xci_file [glob -nocomplain KiwiSDR/import_ip/*.xci] {
-        import_ip \$xci_file
-    }
-    upgrade_ip -quiet [get_ips *]
-    generate_target all [get_ips *]
-}"""
-if MARKER not in content:
-    print(f"ERROR: anchor not found in {path}", file=sys.stderr)
-    sys.exit(1)
-patched = content.replace(MARKER, MARKER + INJECT, 1)
-with open(path, 'w') as f:
-    f.write(patched)
-print(f"Patched {path}: IP import block injected")
-PYEOF
+# Patch 2: inject IP XCI import block — see docs/vivado-batch-ip-handling.md
 python3 /tmp/patch_make_proj.py /build/make_proj.tcl
 
-# Restore pre-compiled IP cache (skips ~30 min IP compilation on first build)
+# Restore pre-compiled IP cache (skips ~30 min IP compilation)
 if [ -d /opt/kiwisdr-ip-cache/ip ]; then
   mkdir -p /build/KiwiSDR/KiwiSDR.cache
   cp -r /opt/kiwisdr-ip-cache/ip /build/KiwiSDR/KiwiSDR.cache/
