@@ -13,7 +13,7 @@ data "google_project" "current" {
 
 resource "google_billing_budget" "fpga" {
   billing_account = var.billing_account
-  display_name    = "FPGA build budget - ${var.environment}"
+  display_name    = "KiwiSDR FPGA build budget - ${var.environment}"
 
   budget_filter {
     projects = ["projects/${data.google_project.current.number}"]
