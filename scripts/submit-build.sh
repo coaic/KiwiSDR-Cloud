@@ -50,27 +50,42 @@ exec > >(tee /var/log/build.log) 2>&1
 
 export HOME=/root
 
+gcs_token() {
+  curl -sf \
+    -H "Metadata-Flavor: Google" \
+    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" \
+    | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])"
+}
+
 gcs_upload() {
   local src="\$1" dst="\$2"
-  local token
-  token=\$(curl -sf \\
-    -H "Metadata-Flavor: Google" \\
-    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" \\
-    | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
   local object
   object=\$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "\${dst}")
-  curl -sf -X POST \\
-    -H "Authorization: Bearer \${token}" \\
-    -H "Content-Type: application/octet-stream" \\
-    --data-binary "@\${src}" \\
-    "https://storage.googleapis.com/upload/storage/v1/b/${BUCKET}/o?uploadType=media&name=\${object}" \\
+  curl -sf -X POST \
+    -H "Authorization: Bearer \$(gcs_token)" \
+    -H "Content-Type: application/octet-stream" \
+    --data-binary "@\${src}" \
+    "https://storage.googleapis.com/upload/storage/v1/b/${BUCKET}/o?uploadType=media&name=\${object}" \
     > /dev/null && echo "Uploaded \${src} -> gs://${BUCKET}/\${dst}" || echo "WARNING: upload failed for \${src}"
 }
 
+gcs_download() {
+  local src="\$1" dst="\$2"
+  local object
+  object=\$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "\${src}")
+  curl -sf \
+    -H "Authorization: Bearer \$(gcs_token)" \
+    "https://storage.googleapis.com/storage/v1/b/${BUCKET}/o/\${object}?alt=media" \
+    -o "\${dst}" && echo "Downloaded gs://${BUCKET}/\${src} -> \${dst}"
+}
+
+# Always upload log on exit, even if the script fails early
+trap 'gcs_upload /var/log/build.log "${JOB_NAME}/build.log"' EXIT
+
 echo "=== KiwiSDR build: repo=${GIT_REPO} ref=${GIT_REF} cfg=${RX_CFG} ==="
 
-# Download patch script from GCS
-gsutil cp "${PATCH_GCS}" /tmp/patch_make_proj.py
+# Download patch script from GCS (curl, no gsutil dependency)
+gcs_download "tools/patch_make_proj.py" /tmp/patch_make_proj.py
 
 cd /tmp
 rm -rf project
