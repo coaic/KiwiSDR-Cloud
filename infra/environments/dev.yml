@@ -1,0 +1,24 @@
+project_id: kiwisdr-fpga-builds
+region: australia-southeast1
+environment: dev
+submitter_email: rcoaic@gmail.com
+
+tfstate_bucket: kiwisdr-fpga-builds-fpga-tfstate
+
+installer_bucket_name: kiwisdr-fpga-installer
+subnet_cidr: 10.152.0.0/20
+
+apis:
+  - cloudresourcemanager.googleapis.com
+  - iam.googleapis.com
+  - compute.googleapis.com
+  - storage.googleapis.com
+  - batch.googleapis.com
+  - logging.googleapis.com
+  - billingbudgets.googleapis.com
+
+# Set billing_account to enable budget alerts (gcloud billing accounts list)
+billing_account: ""
+budget_usd: 20
+
+artifact_retention_days: 90

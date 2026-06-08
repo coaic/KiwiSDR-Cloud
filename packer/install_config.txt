@@ -1,0 +1,14 @@
+# install_config.txt
+# Vivado 2024.2 silent install config.
+# ML Standard edition is free and supports 7-series including Artix-7 A35 (the KiwiSDR FPGA).
+
+Edition=Vivado ML Standard
+Product=Vivado
+Destination=/tools/Xilinx
+Modules=Artix-7:1
+InstallOptions=
+CreateProgramGroupShortcuts=0
+CreateShortcutsForAllUsers=0
+CreateDesktopShortcuts=0
+CreateFileAssociation=0
+EnableDiskUsageOptimization=1
