@@ -32,6 +32,8 @@ if {[string equal $proj_create "yes"]} {
     }
     upgrade_ip -quiet [get_ips *]
     generate_target all [get_ips *]
+    export_ip_user_files -of_objects [get_ips *] -no_script -force -quiet
+    synth_ip [get_ips *]
 }"""
 
 if MARKER not in content:
