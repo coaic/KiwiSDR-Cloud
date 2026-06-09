@@ -31,7 +31,7 @@ source "googlecompute" "vivado" {
   source_image_family      = "ubuntu-pro-2004-lts"
   source_image_project_id  = ["ubuntu-os-pro-cloud"]
   machine_type            = "n2-standard-8"  # only used during image bake
-  disk_size               = 400              # tar ~125 GB + extracted ~120 GB + installed ~60 GB + IP cache
+  disk_size               = 300              # tar ~125 GB + extracted ~120 GB + installed ~60 GB
   disk_type               = "pd-standard"   # bake VM only — Vivado install is CPU-bound, HDD is fine
   image_name              = "vivado-2024-2-{{timestamp}}"
   image_family            = "vivado-kiwisdr"
@@ -97,47 +97,4 @@ build {
     ]
   }
 
-  # Pre-compile Vivado IP cache so Cloud Batch jobs skip the ~30 min IP build step.
-  # Vivado stores compiled IP in KiwiSDR/KiwiSDR.cache/ip/ (set via ip_output_repo in make_proj.tcl).
-  # We run a one-time rx4_wf4 build here to warm the cache, then archive it to /opt/kiwisdr-ip-cache/.
-  # Each build job restores the cache before invoking Vivado, so IP compilation is skipped entirely.
-  provisioner "shell" {
-    inline = ["mkdir -p /tmp/kiwi-warm"]
-  }
-
-  provisioner "file" {
-    source      = "../verilog"
-    destination = "/tmp/kiwi-warm/verilog"
-  }
-
-  provisioner "file" {
-    source      = "../verilog.Vivado.2022.2.ip"
-    destination = "/tmp/kiwi-warm/verilog.Vivado.2022.2.ip"
-  }
-
-  provisioner "shell" {
-    execute_command = "chmod +x {{ .Path }}; bash {{ .Path }}"
-    inline = [
-      "set -e",
-      "source /tools/Xilinx/Vivado/2024.2/settings64.sh",
-
-      # Set up project layout from /tmp/kiwi-warm/ — vivado and TCL files all run from here
-      "cd /tmp/kiwi-warm",
-      "mkdir -p KiwiSDR/import_srcs KiwiSDR/import_ip generated",
-      "rsync -a verilog/ KiwiSDR/import_srcs/",
-      "rsync -a verilog.Vivado.2022.2.ip/ KiwiSDR/import_ip/",
-      "cp verilog/kiwi.tcl verilog/make_proj.tcl .",
-
-      # Run vivado from /tmp/kiwi-warm/ as make_proj.tcl expects
-      "time vivado -mode batch -source make_proj.tcl -tclargs --result_dir /tmp/kiwi-warm --rx4_wf4 || true",
-
-      # Archive the IP cache
-      "sudo mkdir -p /opt/kiwisdr-ip-cache",
-      "sudo cp -r KiwiSDR/KiwiSDR.cache/ip /opt/kiwisdr-ip-cache/",
-      "sudo chmod -R a+rX /opt/kiwisdr-ip-cache",
-
-      # Clean up build artefacts — keep only the cache
-      "rm -rf /tmp/kiwi-warm",
-    ]
-  }
 }
