@@ -57,7 +57,7 @@ KiwiSDR-Cloud/
 | Artifacts bucket | `kiwisdr-fpga-builds-fpga-artifacts` | 90-day lifecycle |
 | Installer bucket | `kiwisdr-fpga-installer` | Permanent |
 | Terraform state | `kiwisdr-fpga-builds-fpga-tfstate` | Versioned |
-| Image family | `vivado-kiwisdr` | Ubuntu 20.04 + Vivado 2024.2 |
+| Image family | `vivado-kiwisdr` | Ubuntu 20.04 Pro + Vivado 2024.2 ML Standard |
 | Service account | `fpga-builder@kiwisdr-fpga-builds.iam.gserviceaccount.com` | No key file |
 | Cloud NAT | `fpga-build-nat` | Outbound internet for git clone |
 
