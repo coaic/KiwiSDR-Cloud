@@ -25,15 +25,11 @@ MARKER = (
 )
 
 INJECT = """
-# Import IP XCI files from import_ip/ (cloud batch equivalent of GUI step 8)
+# Create IP cores from scratch for Vivado 2024.2 using ipcore_properties/ txt files.
+# This bypasses the 2022.2 XCIs entirely, avoiding upgrade compatibility issues.
+# kiwi::make_ipcores is defined in kiwi.tcl (sourced above).
 if {[string equal $proj_create "yes"]} {
-    foreach xci_file [glob -nocomplain KiwiSDR/import_ip/*/*.xci] {
-        import_ip $xci_file
-    }
-    upgrade_ip -quiet [get_ips *]
-    generate_target all [get_ips *]
-    export_ip_user_files -of_objects [get_ips *] -no_script -force -quiet
-    synth_ip [get_ips *]
+    kiwi::make_ipcores
 }"""
 
 if MARKER not in content:
