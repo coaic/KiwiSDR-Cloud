@@ -91,7 +91,7 @@ cd /tmp
 rm -rf project
 git clone --depth=1 --branch "${GIT_REF}" "${GIT_REPO}" project
 
-mkdir -p /build/KiwiSDR/import_srcs /build/KiwiSDR/import_ip /build/generated
+rm -rf /build && mkdir -p /build/KiwiSDR/import_srcs /build/KiwiSDR/import_ip /build/generated
 rsync -a /tmp/project/verilog/ /build/KiwiSDR/import_srcs/
 rsync -a /tmp/project/verilog.Vivado.2022.2.ip/ /build/KiwiSDR/import_ip/
 cp /tmp/project/verilog/kiwi.tcl /tmp/project/verilog/make_proj.tcl /build/
