@@ -27,7 +27,7 @@ MARKER = (
 INJECT = """
 # Import IP XCI files from import_ip/ (cloud batch equivalent of GUI step 8)
 if {[string equal $proj_create "yes"]} {
-    foreach xci_file [glob -nocomplain KiwiSDR/import_ip/*.xci] {
+    foreach xci_file [glob -nocomplain KiwiSDR/import_ip/*/*.xci] {
         import_ip $xci_file
     }
     upgrade_ip -quiet [get_ips *]
