@@ -102,12 +102,9 @@ sed -i 's/create_project \\\${project_name} \\.\/\\\${project_name}/create_proje
 # Patch 2: inject IP XCI import block — see docs/vivado-batch-ip-handling.md
 python3 /tmp/patch_make_proj.py /build/make_proj.tcl
 
-# Restore pre-compiled IP cache (skips ~30 min IP compilation)
-if [ -d /opt/kiwisdr-ip-cache/ip ]; then
-  mkdir -p /build/KiwiSDR/KiwiSDR.cache
-  cp -r /opt/kiwisdr-ip-cache/ip /build/KiwiSDR/KiwiSDR.cache/
-  echo "IP cache restored from /opt/kiwisdr-ip-cache"
-fi
+# IP cache disabled: the baked cache was compiled under Vivado 2022.2 and
+# conflicts with the 2022.2 XCIs upgraded to 2024.2 at import time.
+# IPs compile fresh from the upgraded XCIs (~30 min extra, first build only).
 
 source /tools/Xilinx/Vivado/2024.2/settings64.sh
 
