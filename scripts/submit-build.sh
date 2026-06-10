@@ -25,7 +25,6 @@ BUCKET="${PROJECT_ID}-${PROJECT_NUMBER}-fpga-artifacts"
 SA_EMAIL="fpga-builder@${PROJECT_ID}.iam.gserviceaccount.com"
 IMAGE_URI="projects/${PROJECT_ID}/global/images/family/vivado-2024-2"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PATCH_SCRIPT="${SCRIPT_DIR}/patch_make_proj.py"
 PATCH_GCS="gs://${BUCKET}/tools/patch_make_proj.py"
 
 case "${RX_CFG}" in
@@ -37,86 +36,19 @@ case "${RX_CFG}" in
   *)    echo "Unknown rx-config: ${RX_CFG}. Use rx44, rx82, rx33, rx14, or all."; exit 1 ;;
 esac
 
-# Upload patch script to GCS so the build VM can download it.
-# Uploaded every submission so the VM always runs the current version.
+# Upload patch script — VM downloads it at runtime; always upload current version.
 echo "Uploading patch_make_proj.py -> ${PATCH_GCS}"
-gsutil cp "${PATCH_SCRIPT}" "${PATCH_GCS}"
+gsutil cp "${SCRIPT_DIR}/patch_make_proj.py" "${PATCH_GCS}"
 
-# ---- Build script that runs on the VM ----------------------------------------
-
-read -r -d '' BUILD_SCRIPT <<EOF || true
-#!/bin/bash
-set -e
-exec > >(tee /var/log/build.log) 2>&1
-
-export HOME=/root
-
-gcs_token() {
-  curl -sf \
-    -H "Metadata-Flavor: Google" \
-    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" \
-    | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])"
-}
-
-gcs_upload() {
-  local src="\$1" dst="\$2"
-  local object
-  object=\$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "\${dst}")
-  curl -sf -X POST \
-    -H "Authorization: Bearer \$(gcs_token)" \
-    -H "Content-Type: application/octet-stream" \
-    --data-binary "@\${src}" \
-    "https://storage.googleapis.com/upload/storage/v1/b/${BUCKET}/o?uploadType=media&name=\${object}" \
-    > /dev/null && echo "Uploaded \${src} -> gs://${BUCKET}/\${dst}" || echo "WARNING: upload failed for \${src}"
-}
-
-gcs_download() {
-  local src="\$1" dst="\$2"
-  local object
-  object=\$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "\${src}")
-  curl -sf \
-    -H "Authorization: Bearer \$(gcs_token)" \
-    "https://storage.googleapis.com/storage/v1/b/${BUCKET}/o/\${object}?alt=media" \
-    -o "\${dst}" && echo "Downloaded gs://${BUCKET}/\${src} -> \${dst}"
-}
-
-# Always upload log on exit, even if the script fails early
-trap 'gcs_upload /var/log/build.log "${JOB_NAME}/build.log"' EXIT
-
-echo "=== KiwiSDR build: repo=${GIT_REPO} ref=${GIT_REF} cfg=${RX_CFG} ==="
-
-# Download patch script from GCS (curl, no gsutil dependency)
-gcs_download "tools/patch_make_proj.py" /tmp/patch_make_proj.py
-
-cd /tmp
-rm -rf project
-git clone --depth=1 --branch "${GIT_REF}" "${GIT_REPO}" project
-
-rm -rf /build && mkdir -p /build/KiwiSDR/import_srcs /build/KiwiSDR/import_ip /build/generated
-rsync -a /tmp/project/verilog/ /build/KiwiSDR/import_srcs/
-rsync -a /tmp/project/verilog.Vivado.2022.2.ip/ /build/KiwiSDR/import_ip/
-cp /tmp/project/verilog/kiwi.tcl /tmp/project/verilog/make_proj.tcl /build/
-
-# Patch 1: -force so create_project overwrites any existing project dir without error
-sed -i 's/create_project \\\${project_name} \\.\/\\\${project_name}/create_project -force \\\${project_name} .\\/\\\${project_name}/' /build/make_proj.tcl
-
-# Patch 2: inject kiwi::make_ipcores call — see docs/vivado-batch-ip-handling.md
-python3 /tmp/patch_make_proj.py /build/make_proj.tcl
-
-source /tools/Xilinx/Vivado/2024.2/settings64.sh
-
-cd /build
-time vivado -mode batch -source make_proj.tcl \\
-  -tclargs --result_dir /build ${TCL_FLAG} || BUILD_FAILED=1
-
-gcs_upload /var/log/build.log "${JOB_NAME}/build.log"
-for f in /build/KiwiSDR.*.bit /build/KiwiSDR.*.rpt; do
-  [ -f "\$f" ] && gcs_upload "\$f" "${JOB_NAME}/\$(basename \$f)"
-done
-
-[ -z "\${BUILD_FAILED:-}" ]
-EOF
-
+# Substitute @@MARKER@@ values into the task script, then JSON-encode for embedding.
+BUILD_SCRIPT=$(sed \
+  -e "s|@@BUCKET@@|${BUCKET}|g" \
+  -e "s|@@JOB_NAME@@|${JOB_NAME}|g" \
+  -e "s|@@GIT_REF@@|${GIT_REF}|g" \
+  -e "s|@@GIT_REPO@@|${GIT_REPO}|g" \
+  -e "s|@@RX_CFG@@|${RX_CFG}|g" \
+  -e "s|@@TCL_FLAG@@|${TCL_FLAG}|g" \
+  "${SCRIPT_DIR}/build-task.sh")
 SCRIPT_JSON=$(printf '%s' "${BUILD_SCRIPT}" | jq -Rs .)
 
 CONFIG=$(cat <<EOF
