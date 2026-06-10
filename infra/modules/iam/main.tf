@@ -19,6 +19,14 @@ resource "google_storage_bucket_iam_member" "builder_writer" {
   member = "serviceAccount:${google_service_account.builder.email}"
 }
 
+# Packer bake VMs and batch VMs both run as fpga-builder and need to read
+# the installer from GCS. Without this, gsutil cp fails with 403 AccessDenied.
+resource "google_storage_bucket_iam_member" "builder_installer_reader" {
+  bucket = var.installer_bucket_name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.builder.email}"
+}
+
 # Required for custom images: Batch agent on the VM must report back to the
 # Batch control plane or jobs hang with "no VM has agent reporting correctly".
 resource "google_project_iam_member" "builder_agent" {

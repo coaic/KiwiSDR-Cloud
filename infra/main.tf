@@ -48,6 +48,7 @@ module "iam" {
   source                = "./modules/iam"
   project_id            = var.project_id
   artifacts_bucket_name = module.artifacts_bucket.bucket_name
+  installer_bucket_name = module.installer_bucket.bucket_name
   submitter_email       = var.submitter_email
 
   depends_on = [module.apis]

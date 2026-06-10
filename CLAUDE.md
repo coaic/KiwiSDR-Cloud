@@ -100,6 +100,7 @@ gsutil cp 'gs://kiwisdr-fpga-builds-fpga-artifacts/<job-name>/*.bit' ./
 
 ## Docs
 
+- [Troubleshooting](docs/troubleshooting.md) — IAM requirements, common failures, diagnosing with Claude
 - [Vivado Batch IP Handling](docs/vivado-batch-ip-handling.md) — why make_proj.tcl is
   patched at runtime and how the IP cache works
 - [Remote Desktop Plan](docs/vivado-remote-desktop-plan.md) — GCP-hosted Vivado GUI

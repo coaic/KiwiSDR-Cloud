@@ -35,6 +35,7 @@ source "googlecompute" "vivado" {
   disk_type               = "pd-standard"   # bake VM only — Vivado install is CPU-bound, HDD is fine
   image_name              = "vivado-2024-2-{{timestamp}}"
   image_family            = "vivado-2024-2"
+  service_account_email   = "fpga-builder@${var.project_id}.iam.gserviceaccount.com"
   ssh_username  = "packer"
   ssh_timeout   = "3h"
 }
