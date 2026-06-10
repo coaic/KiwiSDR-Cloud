@@ -22,7 +22,7 @@ variable "zone" {
 
 variable "vivado_installer_gcs" {
   type        = string
-  description = "gs:// URL of FPGAs_AdaptiveSoCs_Unified_2024.2_*.tar in your installer bucket"
+  description = "gs:// URL of FPGAs_AdaptiveSoCs_Unified_2024.2_*.tar in your installer bucket. The installer must be obtained directly from AMD/Xilinx: https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-suite/archive.html"
 }
 
 source "googlecompute" "vivado" {
@@ -34,7 +34,7 @@ source "googlecompute" "vivado" {
   disk_size               = 300              # tar ~125 GB + extracted ~120 GB + installed ~60 GB
   disk_type               = "pd-standard"   # bake VM only — Vivado install is CPU-bound, HDD is fine
   image_name              = "vivado-2024-2-{{timestamp}}"
-  image_family            = "vivado-kiwisdr"
+  image_family            = "vivado-2024-2"
   ssh_username  = "packer"
   ssh_timeout   = "3h"
 }

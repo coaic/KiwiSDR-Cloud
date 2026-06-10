@@ -68,6 +68,6 @@ The patch is applied transiently on the VM and never persisted to the repo for t
 ## IP Cache
 
 Vivado's global IP cache (`~/.Vivado/`) is populated the first time `kiwi::make_ipcores`
-runs on a VM. This cache is baked into the `vivado-kiwisdr` GCP image during the Packer
+runs on a VM. This cache is baked into the `vivado-2024-2` GCP image during the Packer
 build, so every Cloud Batch job starts with pre-compiled IPs available. Build time is
 ~7 minutes rather than ~35-45 minutes for a cold build with no cache.

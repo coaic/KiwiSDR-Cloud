@@ -50,7 +50,12 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
 
 echo
 echo "=== Done. Next steps ==="
-echo "1. Upload Vivado installer:"
+echo "1. Obtain and upload the Vivado 2024.2 installer:"
+echo "   The installer must be downloaded directly from AMD/Xilinx (free account required)."
+echo "   Download: https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-suite/archive.html"
+echo "   Select: Vivado 2024.2 -> Vivado HLx 2024.2: All OS installer Single-File Download"
+echo "   File: FPGAs_AdaptiveSoCs_Unified_2024.2_*.tar (~125 GB)"
+echo "   Then upload:"
 echo "   gsutil cp ~/Downloads/FPGAs_AdaptiveSoCs_Unified_2024.2_*.tar gs://${PROJECT_ID}-fpga-installer/"
 echo "2. Bake Vivado image:"
 echo "   cd packer && packer build -var project_id=${PROJECT_ID} -var vivado_installer_gcs=gs://${PROJECT_ID}-fpga-installer/... vivado-image.pkr.hcl"

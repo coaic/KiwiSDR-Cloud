@@ -57,7 +57,7 @@ KiwiSDR-Cloud/
 | Artifacts bucket | `kiwisdr-fpga-builds-fpga-artifacts` | 90-day lifecycle |
 | Installer bucket | `kiwisdr-fpga-installer` | Permanent |
 | Terraform state | `kiwisdr-fpga-builds-fpga-tfstate` | Versioned |
-| Image family | `vivado-kiwisdr` | Ubuntu 20.04 Pro + Vivado 2024.2 ML Standard |
+| Image family | `vivado-2024-2` | Ubuntu 20.04 Pro + Vivado 2024.2 ML Standard |
 | Service account | `fpga-builder@kiwisdr-fpga-builds.iam.gserviceaccount.com` | No key file |
 | Cloud NAT | `fpga-build-nat` | Outbound internet for git clone |
 
@@ -109,4 +109,4 @@ gsutil cp 'gs://kiwisdr-fpga-builds-fpga-artifacts/<job-name>/*.bit' ./
 
 - [KiwiSDR upstream](https://github.com/jks-prv/KiwiSDR) — original project
 - [coaic/KiwiSDR](https://github.com/coaic/KiwiSDR) — fork used as build source
-- [RedPityaGen2](../RedPityaGen2/) — sister project, same cloud pattern for Red Pitaya Gen 2
+- [redpitaya-cloud](../redpitaya-cloud/) — sister project, same cloud pattern for Red Pitaya Gen 2
