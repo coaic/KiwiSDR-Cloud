@@ -15,9 +15,10 @@ set -euo pipefail
 
 ENV="${1:?usage: bootstrap.sh <env>}"
 CONFIG="infra/environments/${ENV}.yml"
+LOCAL_CONFIG="infra/environments/${ENV}.local.yml"
 
 if [[ ! -f "${CONFIG}" ]]; then
-  echo "Error: ${CONFIG} not found — fill in your project details first" >&2
+  echo "Error: ${CONFIG} not found" >&2
   exit 1
 fi
 
@@ -26,12 +27,38 @@ if ! command -v yq &>/dev/null; then
   exit 1
 fi
 
-PROJECT_ID=$(yq '.project_id' "${CONFIG}")
-REGION=$(yq '.region' "${CONFIG}")
-TFSTATE_BUCKET=$(yq '.tfstate_bucket' "${CONFIG}")
+# First run: create dev.local.yml with the minimum required values.
+if [[ ! -f "${LOCAL_CONFIG}" ]]; then
+  echo "--- First run: no ${LOCAL_CONFIG} found ---"
+  echo ""
+  read -r -p "GCP project ID (must be globally unique): " _project_id
+  read -r -p "Your email (for IAM submitter access):    " _email
+  cat > "${LOCAL_CONFIG}" <<EOF
+# Local deployment config — gitignored, never commit.
+# All values here override infra/environments/${ENV}.yml.
+project_id: ${_project_id}
+submitter_email: ${_email}
+tfstate_bucket: ${_project_id}-fpga-tfstate
+EOF
+  echo ""
+  echo "Created ${LOCAL_CONFIG}"
+  echo ""
+fi
 
-if [[ "${PROJECT_ID}" == "YOUR_GCP_PROJECT_ID" ]]; then
-  echo "Error: edit ${CONFIG} and set project_id before running bootstrap" >&2
+# Merge base config with local overrides (local wins on any key present in both).
+MERGED=$(mktemp)
+trap 'rm -f "${MERGED}"' EXIT
+
+yq -o=json "${CONFIG}" \
+  | yq -o=json ". * $(yq -o=json "${LOCAL_CONFIG}")" \
+  > "${MERGED}"
+
+PROJECT_ID=$(yq '.project_id' "${MERGED}")
+REGION=$(yq '.region' "${MERGED}")
+TFSTATE_BUCKET=$(yq '.tfstate_bucket' "${MERGED}")
+
+if [[ "${PROJECT_ID}" == "YOUR-UNIQUE-PROJECT-ID" ]]; then
+  echo "Error: edit ${LOCAL_CONFIG} and set project_id" >&2
   exit 1
 fi
 
@@ -48,7 +75,6 @@ echo "  Project : ${PROJECT_ID}"
 echo "  Region  : ${REGION}"
 echo
 
-# Create bucket if it doesn't already exist
 if gsutil ls -b "gs://${TFSTATE_BUCKET}" &>/dev/null; then
   echo "Bucket already exists — skipping creation"
 else
@@ -56,7 +82,6 @@ else
   echo "Bucket created."
 fi
 
-# Versioning lets you recover from accidental state corruption
 gsutil versioning set on "gs://${TFSTATE_BUCKET}"
 echo "Versioning enabled."
 

@@ -57,7 +57,8 @@ gcloud batch jobs describe ${JOB} \
 The only file you need locally is the bitstream to flash to hardware:
 
 ```bash
-gsutil cp "gs://kiwisdr-fpga-builds-fpga-artifacts/${JOB}/*.bit" ./
+ARTIFACTS=$(cd infra && terraform output -raw artifacts_bucket)
+gsutil cp "gs://${ARTIFACTS}/${JOB}/*.bit" ./
 ```
 
 All diagnostic files (`build.log`, `.rpt` timing reports) stay in GCS —
@@ -116,8 +117,8 @@ Use a fast, cheap model (Sonnet) for the tight edit→build→debug loop:
 - **Diagnose a build failure** — paste the error from `build.log` and ask what
   caused it. Claude can read the log directly from GCS:
   ```
-  fetch gs://kiwisdr-fpga-builds-fpga-artifacts/<job>/build.log and tell me
-  why the build failed
+  fetch gs://<artifacts-bucket>/<job>/build.log and tell me why the build failed
+  (run: cd infra && terraform output artifacts_bucket)
   ```
 - **Interpret timing** — paste the Timing Summary section and ask whether timing
   is acceptable, what the critical path is, and what RTL or constraint change
@@ -176,7 +177,7 @@ missed bug would mean another full build cycle or a broken bitstream.
 gcloud batch jobs list --location=australia-southeast1 --project=kiwisdr-fpga-builds
 
 # List artifacts for any job
-gsutil ls "gs://kiwisdr-fpga-builds-fpga-artifacts/"
+gsutil ls "gs://$(cd infra && terraform output -raw artifacts_bucket)/"
 ```
 
 Artifacts are kept for 90 days (configured in `infra/environments/dev.yml`).

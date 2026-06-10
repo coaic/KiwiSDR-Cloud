@@ -19,10 +19,12 @@ For one-off questions without a full session, paste this into Claude:
 
 > I'm working on kiwisdr-cloud — GCP Cloud Batch FPGA builds for KiwiSDR using
 > Vivado 2024.2. Here is the error I hit: [paste error]. Relevant context:
-> project `kiwisdr-fpga-builds`, installer bucket `kiwisdr-fpga-installer`,
-> artifacts bucket `kiwisdr-fpga-builds-fpga-artifacts`, service account
-> `fpga-builder@kiwisdr-fpga-builds.iam.gserviceaccount.com`,
+> project `YOUR_PROJECT_ID`, installer bucket `YOUR_INSTALLER_BUCKET`,
+> artifacts bucket `YOUR_ARTIFACTS_BUCKET`, service account
+> `fpga-builder@YOUR_PROJECT_ID.iam.gserviceaccount.com`,
 > image family `vivado-2024-2`. Help me diagnose this.
+>
+> (Run `cd infra && terraform output` to get the exact bucket names for your deployment.)
 
 ---
 
@@ -36,7 +38,7 @@ the following bindings exist:
 | `fpga-builder` SA | Project | `roles/batch.agentReporter` | Batch agent heartbeat — without this jobs hang |
 | `fpga-builder` SA | Project | `roles/logging.logWriter` | Write build logs to Cloud Logging |
 | `fpga-builder` SA | `*-fpga-artifacts` bucket | `roles/storage.objectAdmin` | Upload bitstreams and build logs |
-| `fpga-builder` SA | `kiwisdr-fpga-installer` bucket | `roles/storage.objectViewer` | Read Vivado installer during Packer bake |
+| `fpga-builder` SA | `*-fpga-installer` bucket | `roles/storage.objectViewer` | Read Vivado installer during Packer bake |
 | Submitter (your email) | Project | `roles/batch.jobsEditor` | Submit and cancel Cloud Batch jobs |
 | Submitter (your email) | `fpga-builder` SA | `roles/iam.serviceAccountUser` | Run jobs as the builder SA |
 | Submitter (your email) | `*-fpga-artifacts` bucket | `roles/storage.objectViewer` | Fetch bitstreams after build |
@@ -101,7 +103,7 @@ Give Claude the job name and ask it to fetch the `build.log` from GCS
 why did job kiwisdr-20260101-120000 fail?
 ```
 
-Claude reads `gs://kiwisdr-fpga-builds-fpga-artifacts/JOB_NAME/build.log`
+Claude reads `gs://ARTIFACTS_BUCKET/JOB_NAME/build.log` (run `cd infra && terraform output artifacts_bucket`)
 directly and diagnoses the error.
 
 For real-time streaming before the job exits, tail the Cloud Logging stream:
@@ -157,7 +159,7 @@ gcloud compute images list --project=kiwisdr-fpga-builds \
   --no-standard-images --filter="family=vivado-2024-2"
 
 # Check IAM bindings on the installer bucket
-gsutil iam get gs://kiwisdr-fpga-installer
+gsutil iam get $(cd infra && terraform output -raw installer_bucket_url)
 
 # Check service account exists
 gcloud iam service-accounts describe \

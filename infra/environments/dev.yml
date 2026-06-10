@@ -1,18 +1,32 @@
-# dev.yml — development environment config
+# dev.yml — template config (checked in, safe to share)
+#
+# DO NOT put real project IDs or emails here.
+# Create infra/environments/dev.local.yml (gitignored) with your actual values:
+#
+#   cp infra/environments/dev.yml infra/environments/dev.local.yml
+#   # then edit dev.local.yml — at minimum set project_id, submitter_email, tfstate_bucket
+#
 # First-time setup order:
-#   1. Edit this file (fill in project_id, submitter_email)
+#   1. Create and edit dev.local.yml as above
 #   2. Run: ./scripts/setup-gcp.sh  (creates project, billing, state bucket)
-#   3. Run: ./tf.sh dev init
+#   3. Run: cd infra && ./tf.sh dev init
 #   4. Run: ./tf.sh dev apply
+#
+# Bucket naming: Terraform derives bucket names as:
+#   {project_id}-{project_number}-fpga-artifacts
+#   {project_id}-{project_number}-fpga-installer
+# The project number is GCP-assigned and globally unique — no manual config needed.
+# Set installer_bucket_name in dev.local.yml only when migrating an existing deployment.
 
-project_id: kiwisdr-fpga-builds
+project_id: YOUR-UNIQUE-PROJECT-ID
 region: australia-southeast1
 environment: dev
-submitter_email: rcoaic@gmail.com
+submitter_email: you@example.com
 
-tfstate_bucket: kiwisdr-fpga-builds-fpga-tfstate
+# Terraform state bucket — created by bootstrap.sh before terraform init.
+# Set this to {your-project-id}-fpga-tfstate in dev.local.yml.
+tfstate_bucket: YOUR-UNIQUE-PROJECT-ID-fpga-tfstate
 
-installer_bucket_name: kiwisdr-fpga-installer
 subnet_cidr: 10.152.0.0/20
 
 apis:
@@ -24,7 +38,8 @@ apis:
   - logging.googleapis.com
   - billingbudgets.googleapis.com
 
-# Set billing_account to enable budget alerts (gcloud billing accounts list)
+# Set billing_account in dev.local.yml to enable budget alerts
+# (gcloud billing accounts list)
 billing_account: ""
 budget_usd: 20
 

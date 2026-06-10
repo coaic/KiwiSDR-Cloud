@@ -19,6 +19,16 @@ provider "google" {
   billing_project       = var.project_id
 }
 
+# Project number is GCP-assigned and globally unique — including it in bucket
+# names prevents conflicts even if a project ID is later recycled by GCP.
+data "google_project" "this" {}
+
+locals {
+  project_number        = data.google_project.this.number
+  artifacts_bucket_name = "${var.project_id}-${local.project_number}-fpga-artifacts"
+  installer_bucket_name = var.installer_bucket_name != "" ? var.installer_bucket_name : "${var.project_id}-${local.project_number}-fpga-installer"
+}
+
 module "apis" {
   source     = "./modules/apis"
   project_id = var.project_id
@@ -27,7 +37,7 @@ module "apis" {
 
 module "artifacts_bucket" {
   source         = "./modules/storage"
-  bucket_name    = "${var.project_id}-fpga-artifacts"
+  bucket_name    = local.artifacts_bucket_name
   location       = var.region
   retention_days = var.artifact_retention_days
 
@@ -36,7 +46,7 @@ module "artifacts_bucket" {
 
 module "installer_bucket" {
   source             = "./modules/storage"
-  bucket_name        = var.installer_bucket_name
+  bucket_name        = local.installer_bucket_name
   location           = var.region
   retention_days     = 0
   versioning_enabled = false

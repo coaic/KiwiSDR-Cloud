@@ -38,7 +38,8 @@ variable "artifact_retention_days" {
 
 variable "installer_bucket_name" {
   type        = string
-  description = "GCS bucket name for the Vivado installer archive"
+  description = "GCS bucket name for the Vivado installer archive. Leave empty to derive from project_id + project_number."
+  default     = ""
 }
 
 variable "subnet_cidr" {

@@ -19,8 +19,9 @@ REGION="${GCP_REGION:-australia-southeast1}"
 GIT_REPO="${1:?usage: submit-all-configs.sh <git-url> [git-ref]}"
 GIT_REF="${2:-master}"
 
+PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format="value(projectNumber)")
 JOB_NAME="kiwisdr-all-$(date +%Y%m%d-%H%M%S)"
-BUCKET="${PROJECT_ID}-fpga-artifacts"
+BUCKET="${PROJECT_ID}-${PROJECT_NUMBER}-fpga-artifacts"
 SA_EMAIL="fpga-builder@${PROJECT_ID}.iam.gserviceaccount.com"
 IMAGE_URI="projects/${PROJECT_ID}/global/images/family/vivado-2024-2"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
