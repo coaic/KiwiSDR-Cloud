@@ -26,7 +26,9 @@ gcloud services enable \
   --project="${PROJECT_ID}"
 
 # GCS buckets
-gsutil mb -p "${PROJECT_ID}" -l "${REGION}" "gs://${PROJECT_ID}-fpga-installer"    2>/dev/null || echo "Installer bucket already exists"
+# Installer bucket uses a short name (not prefixed with project ID) — must match
+# infra/environments/dev.yml installer_bucket_name and Terraform state.
+gsutil mb -p "${PROJECT_ID}" -l "${REGION}" "gs://kiwisdr-fpga-installer"          2>/dev/null || echo "Installer bucket already exists"
 gsutil mb -p "${PROJECT_ID}" -l "${REGION}" "gs://${PROJECT_ID}-fpga-artifacts"    2>/dev/null || echo "Artifacts bucket already exists"
 
 # 90-day lifecycle on artifacts (bitstreams are small, cheap to keep)
@@ -56,9 +58,9 @@ echo "   Download: https://www.xilinx.com/support/download/index.html/content/xi
 echo "   Select: Vivado 2024.2 -> Vivado HLx 2024.2: All OS installer Single-File Download"
 echo "   File: FPGAs_AdaptiveSoCs_Unified_2024.2_*.tar (~125 GB)"
 echo "   Then upload:"
-echo "   gsutil cp ~/Downloads/FPGAs_AdaptiveSoCs_Unified_2024.2_*.tar gs://${PROJECT_ID}-fpga-installer/"
+echo "   gsutil cp ~/Downloads/FPGAs_AdaptiveSoCs_Unified_2024.2_*.tar gs://kiwisdr-fpga-installer/"
 echo "2. Bake Vivado image:"
-echo "   cd packer && packer build -var project_id=${PROJECT_ID} -var vivado_installer_gcs=gs://${PROJECT_ID}-fpga-installer/... vivado-image.pkr.hcl"
+echo "   cd packer && packer build -var project_id=${PROJECT_ID} -var vivado_installer_gcs=gs://kiwisdr-fpga-installer/FPGAs_AdaptiveSoCs_Unified_2024.2_*.tar vivado-image.pkr.hcl"
 echo "3. Submit a build:"
 echo "   export GCP_PROJECT=${PROJECT_ID}"
-echo "   ./scripts/submit-build.sh git@github.com:coaic/KiwiSDR.git master rx44"
+echo "   ./scripts/submit-build.sh https://github.com/coaic/KiwiSDR.git master rx44"

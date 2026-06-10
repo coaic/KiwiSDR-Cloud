@@ -43,7 +43,7 @@ source "googlecompute" "vivado" {
 build {
   sources = ["source.googlecompute.vivado"]
 
-  # System dependencies for Vivado 2024.2 on Ubuntu 22.04
+  # System dependencies for Vivado 2024.2 on Ubuntu 20.04
   provisioner "shell" {
     inline = [
       # Wait for cloud-init / unattended-upgrades to release apt locks

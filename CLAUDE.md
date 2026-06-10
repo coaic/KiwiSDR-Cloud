@@ -42,8 +42,6 @@ KiwiSDR-Cloud/
 
 - **Ephemeral compute**: Cloud Batch SPOT VMs spin up per job, terminate on completion.
 - **Persistent artifacts**: GCS bucket stores bitstreams and logs with 90-day lifecycle.
-- **Pre-compiled IP cache**: Vivado IP blocks compiled once during Packer image bake,
-  cached at `/opt/kiwisdr-ip-cache/`. Restoring it saves ~30 min per build.
 - **No secrets in repo**: No service account keys. VMs authenticate via GCE metadata.
   Local auth via `gcloud auth application-default login`.
 - **No KiwiSDR fork modifications required**: The IP import patch is applied transiently
@@ -68,7 +66,7 @@ KiwiSDR-Cloud/
 | Edition | ML Standard (free, supports Artix-7) |
 | Device | Artix-7 A35 (`xc7a35tftg256-1`) |
 | Version | 2024.2 |
-| Configurations | rx4.wf4, rx8.wf2, rx3.wf3, rx14.wf0 |
+| Configurations | rx44, rx82, rx33, rx14 |
 
 ## Quick Reference
 

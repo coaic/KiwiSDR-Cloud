@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # patch_make_proj.py — patch make_proj.tcl for cloud batch builds.
 #
-# Injects an IP import block after the source-file add step, which is
-# the batch-mode equivalent of the manual GUI step:
-#   "Add Sources → import_ip/ → Copy sources checked"
-#
-# This is needed because --regen_ip is broken in Vivado 2024.2, and the
-# GUI step is not performed in headless builds.
+# Injects a call to kiwi::make_ipcores after the source-file add step.
+# This creates all 22 IP cores from scratch using ipcore_properties/*.txt,
+# bypassing the 2022.2 XCI files entirely (which cause broken LUT connections
+# when upgraded to Vivado 2024.2's opt_design).
 #
 # See docs/vivado-batch-ip-handling.md for full explanation.
 #

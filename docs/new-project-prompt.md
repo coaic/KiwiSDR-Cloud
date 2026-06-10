@@ -24,7 +24,7 @@ Two reference implementations exist:
 - **[redpitaya-cloud](https://github.com/coaic/redpitaya-cloud)** — Vivado 2020.1,
   Zynq-7020, single build config. Fully validated.
 - **[kiwisdr-cloud](https://github.com/coaic/kiwisdr-cloud)** — Vivado 2024.2,
-  Artix-7 A35, 4 build configs with IP cache pre-baked into the image.
+  Artix-7 A35, 4 build configs (rx44, rx82, rx33, rx14). IPs compiled fresh per build.
 
 Both repos are MIT licensed. Fork either one as a starting point.
 

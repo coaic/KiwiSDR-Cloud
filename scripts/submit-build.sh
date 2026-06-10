@@ -96,15 +96,11 @@ rsync -a /tmp/project/verilog/ /build/KiwiSDR/import_srcs/
 rsync -a /tmp/project/verilog.Vivado.2022.2.ip/ /build/KiwiSDR/import_ip/
 cp /tmp/project/verilog/kiwi.tcl /tmp/project/verilog/make_proj.tcl /build/
 
-# Patch 1: -force flag so create_project tolerates the pre-restored IP cache dir
+# Patch 1: -force so create_project overwrites any existing project dir without error
 sed -i 's/create_project \\\${project_name} \\.\/\\\${project_name}/create_project -force \\\${project_name} .\\/\\\${project_name}/' /build/make_proj.tcl
 
-# Patch 2: inject IP XCI import block — see docs/vivado-batch-ip-handling.md
+# Patch 2: inject kiwi::make_ipcores call — see docs/vivado-batch-ip-handling.md
 python3 /tmp/patch_make_proj.py /build/make_proj.tcl
-
-# IP cache disabled: the baked cache was compiled under Vivado 2022.2 and
-# conflicts with the 2022.2 XCIs upgraded to 2024.2 at import time.
-# IPs compile fresh from the upgraded XCIs (~30 min extra, first build only).
 
 source /tools/Xilinx/Vivado/2024.2/settings64.sh
 

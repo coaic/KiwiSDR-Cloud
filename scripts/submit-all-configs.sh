@@ -3,7 +3,7 @@
 #
 # Submits rx44, rx82, rx33, rx14 as a single Cloud Batch job with 4 tasks
 # running 2 at a time (parallelism capped to stay within the pd-standard
-# 1000 GB regional quota — each task needs a 300 GB boot disk).
+# 1000 GB regional quota — each task needs a 400 GB boot disk, 2 × 400 = 800 GB).
 #
 # Usage:   ./submit-all-configs.sh <git-url> [git-ref]
 # Example: ./submit-all-configs.sh https://github.com/coaic/KiwiSDR.git master

@@ -65,9 +65,8 @@ The patch is applied transiently on the VM and never persisted to the repo for t
 2. **Clean separation** — `make_proj.tcl` is part of the KiwiSDR project and should not
    carry cloud-specific modifications.
 
-## IP Cache
+## Build Time
 
-Vivado's global IP cache (`~/.Vivado/`) is populated the first time `kiwi::make_ipcores`
-runs on a VM. This cache is baked into the `vivado-2024-2` GCP image during the Packer
-build, so every Cloud Batch job starts with pre-compiled IPs available. Build time is
-~7 minutes rather than ~35-45 minutes for a cold build with no cache.
+IPs are compiled fresh on each build by `kiwi::make_ipcores`. With an n2-standard-8 VM
+and the Artix-7 A35 device, a full synthesis + implementation run takes approximately
+8 minutes end-to-end.
