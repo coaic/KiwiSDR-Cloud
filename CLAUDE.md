@@ -32,10 +32,14 @@ KiwiSDR-Cloud/
 │   ├── setup-gcp.sh              # One-time GCP resource creation (no Terraform needed)
 │   ├── bootstrap.sh              # Create Terraform state bucket before first tf init
 │   ├── submit-build.sh           # Submit a single-config Cloud Batch build
-│   └── submit-all-configs.sh     # Submit all 4 configs (2 parallel, quota-safe)
+│   ├── submit-all-configs.sh     # Submit all 4 configs (2 parallel, quota-safe)
+│   └── patch_make_proj.py        # Injects kiwi::make_ipcores call into make_proj.tcl
 └── docs/
+    ├── workflow.md                  # Edit → build → timing loop; AI agent usage
+    ├── troubleshooting.md           # IAM requirements, common failures, diagnosing with Claude
     ├── vivado-batch-ip-handling.md  # Why/how make_proj.tcl is patched at runtime
-    └── vivado-remote-desktop-plan.md  # Plan for GCP-hosted Vivado GUI session
+    ├── vivado-remote-desktop-plan.md  # Plan for GCP-hosted Vivado GUI session
+    └── new-project-prompt.md        # Bootstrap prompt for starting a new cloud build project
 ```
 
 ## Design Principles

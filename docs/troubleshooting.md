@@ -94,7 +94,17 @@ Common causes:
 
 ### Cloud Batch: job RUNNING but build fails
 
-Tail the logs:
+Give Claude the job name and ask it to fetch the `build.log` from GCS
+(uploaded even on failure via the `trap` in `submit-build.sh`):
+
+```
+why did job kiwisdr-20260101-120000 fail?
+```
+
+Claude reads `gs://kiwisdr-fpga-builds-fpga-artifacts/JOB_NAME/build.log`
+directly and diagnoses the error.
+
+For real-time streaming before the job exits, tail the Cloud Logging stream:
 
 ```bash
 gcloud logging read \
@@ -102,16 +112,6 @@ gcloud logging read \
   --project=kiwisdr-fpga-builds --limit=200 --order=asc \
   --format='value(textPayload)'
 ```
-
-Or give Claude the job name and ask it to fetch the `build.log` from GCS
-(uploaded even on failure via the `trap` in `submit-build.sh`):
-
-```
-why did job kiwisdr-20260101-120000 fail?
-```
-
-Claude will read `gs://kiwisdr-fpga-builds-fpga-artifacts/JOB_NAME/build.log`
-directly and diagnose the error.
 
 ---
 
