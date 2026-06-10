@@ -60,14 +60,16 @@ rsync -a /tmp/project/verilog/                   /build/KiwiSDR/import_srcs/
 rsync -a /tmp/project/verilog.Vivado.2022.2.ip/  /build/KiwiSDR/import_ip/
 cp /tmp/project/verilog/kiwi.tcl /tmp/project/verilog/make_proj.tcl /build/
 
+# shellcheck disable=SC2016  # \${project_name} is literal sed pattern, not a shell variable
 sed -i 's/create_project \${project_name} \.\/\${project_name}/create_project -force \${project_name} .\/\${project_name}/' /build/make_proj.tcl
 python3 /tmp/patch_make_proj.py /build/make_proj.tcl
 
+# shellcheck source=/dev/null
 source /tools/Xilinx/Vivado/2024.2/settings64.sh
 
 cd /build
 time vivado -mode batch -source make_proj.tcl \
-  -tclargs --result_dir /build ${TCL_FLAG} || BUILD_FAILED=1
+  -tclargs --result_dir /build "${TCL_FLAG}" || BUILD_FAILED=1
 
 for f in /build/KiwiSDR.*.bit /build/KiwiSDR.*.rpt; do
   [ -f "$f" ] && gcs_upload "$f" "@@JOB_NAME@@/${RX_CFG}/$(basename "$f")"
