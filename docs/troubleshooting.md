@@ -103,12 +103,15 @@ gcloud logging read \
   --format='value(textPayload)'
 ```
 
-Or fetch the uploaded `build.log` (uploaded even on failure via the `trap` in
-`submit-build.sh`):
+Or give Claude the job name and ask it to fetch the `build.log` from GCS
+(uploaded even on failure via the `trap` in `submit-build.sh`):
 
-```bash
-gsutil cp "gs://kiwisdr-fpga-builds-fpga-artifacts/JOB_NAME/build.log" ./build.log
 ```
+why did job kiwisdr-20260101-120000 fail?
+```
+
+Claude will read `gs://kiwisdr-fpga-builds-fpga-artifacts/JOB_NAME/build.log`
+directly and diagnose the error.
 
 ---
 

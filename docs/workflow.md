@@ -54,35 +54,30 @@ gcloud batch jobs describe ${JOB} \
 
 ## 3. Retrieve Artifacts
 
+The only file you need locally is the bitstream to flash to hardware:
+
 ```bash
-BUCKET=kiwisdr-fpga-builds-fpga-artifacts
-
-# List outputs
-gsutil ls "gs://${BUCKET}/${JOB}/"
-
-# Download bitstream
-gsutil cp "gs://${BUCKET}/${JOB}/*.bit" ./
-
-# View build log (includes timing summary)
-gsutil cat "gs://${BUCKET}/${JOB}/build.log"
+gsutil cp "gs://kiwisdr-fpga-builds-fpga-artifacts/${JOB}/*.bit" ./
 ```
+
+All diagnostic files (`build.log`, `.rpt` timing reports) stay in GCS —
+hand the job name to Claude and it will fetch and analyse them directly.
 
 ---
 
 ## 4. Check Timing
 
-**Quick check** — scan the build log for Worst Negative Slack:
+Give Claude the job name:
 
-```bash
-gsutil cat "gs://${BUCKET}/${JOB}/build.log" | grep -E "WNS|Timing"
+```
+check timing for job kiwisdr-20260101-120000
 ```
 
-A positive WNS means timing is met. Negative means timing violation — the
-bitstream may be unreliable.
+Claude fetches the timing reports from GCS and tells you whether timing is
+met, what the Worst Negative Slack is, and what to change if it isn't.
 
 **Interactive timing analysis** — open Vivado GUI on the remote desktop (see
-`docs/vivado-remote-desktop-plan.md` for when this is implemented). Until then,
-download the build log and search for `Timing Summary` or `Critical Warning`.
+`docs/vivado-remote-desktop-plan.md` for when this is implemented).
 
 ---
 
@@ -160,10 +155,8 @@ missed bug would mean another full build cycle or a broken bitstream.
 
 - Claude has no local Vivado installation and cannot run synthesis — it works
   from source files and build logs, not from running Vivado itself.
-- Any file uploaded to GCS is directly accessible to Claude via `gsutil cat` —
-  you don't need to download `.rpt` or `.bit` files locally first. Just give
-  Claude the job name and it can fetch and analyse the timing reports directly
-  from `gs://kiwisdr-fpga-builds-fpga-artifacts/<job>/`.
+- All diagnostic files (`build.log`, `.rpt`) live in GCS — Claude fetches them
+  directly via `gsutil cat`. You never need to download them locally.
 - If a build fails with a cryptic Vivado message, paste the full surrounding
   context (not just the error line) — Vivado errors are often consequences of
   an earlier root cause several lines up.
