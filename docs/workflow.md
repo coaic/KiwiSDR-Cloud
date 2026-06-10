@@ -98,6 +98,80 @@ See `docs/troubleshooting.md` for common failure patterns.
 
 ---
 
+## Using an AI Coding Agent
+
+Claude Code (or any AI coding agent) fits naturally into this workflow. The
+`CLAUDE.md` in this repo loads automatically when you run `claude` from the
+project root, so the agent already knows the GCP project, bucket names, image
+families, build commands, the `patch_make_proj.py` mechanism, and infrastructure
+layout — you don't need to explain any of that.
+
+```bash
+# From the repo root
+claude
+```
+
+### Sonnet — iterative work
+
+Use a fast, cheap model (Sonnet) for the tight edit→build→debug loop:
+
+- **Diagnose a build failure** — paste the error from `build.log` and ask what
+  caused it. Claude can read the log directly from GCS:
+  ```
+  fetch gs://kiwisdr-fpga-builds-fpga-artifacts/<job>/build.log and tell me
+  why the build failed
+  ```
+- **Interpret timing** — paste the Timing Summary section and ask whether timing
+  is acceptable, what the critical path is, and what RTL or constraint change
+  would help.
+- **Edit RTL** — describe what you want to change; Claude can read the source
+  files in the KiwiSDR checkout, make the edit, and summarise what changed.
+- **Submit and monitor** — ask Claude to submit a build and poll until done;
+  it can run the `submit-build.sh` and `gcloud batch` commands for you.
+- **IP core changes** — if you need to reconfigure an IP core, Claude can edit
+  `verilog/import_srcs/ipcore_properties/ipcore_*.txt` and explain how the
+  change flows through `kiwi::make_ipcores` to the synthesised netlist.
+- **Infrastructure changes** — ask Claude to plan and apply Terraform changes;
+  it will run `tf.sh dev plan` first and show you the diff before applying.
+
+### Opus — final review
+
+Before a significant build milestone (first timing closure, releasing a
+bitstream, changing IP configuration), switch to Opus for a thorough review:
+
+```
+/code-review ultra
+```
+
+This spawns a multi-agent cloud review of all changed files. Useful for:
+
+- Catching subtle RTL issues (unintended latches, clock-domain crossings,
+  reset strategy) before committing to a long build run
+- Verifying IP core parameter changes are correct and consistent across all
+  4 configurations (rx44/rx82/rx33/rx14)
+- Checking that `patch_make_proj.py` changes still correctly target the
+  right anchor in `make_proj.tcl`
+- Cross-checking that infrastructure changes (IAM, Terraform) are safe
+
+Opus reviews cost more and take longer — reserve them for changes where a
+missed bug would mean another full build cycle or a broken bitstream.
+
+### Tips
+
+- Claude has no local Vivado installation and cannot run synthesis — it works
+  from source files and build logs, not from running Vivado itself.
+- For timing analysis, download the `.rpt` files from GCS alongside the `.bit`
+  and point Claude at them; they contain far more detail than the build log
+  summary.
+- If a build fails with a cryptic Vivado message, paste the full surrounding
+  context (not just the error line) — Vivado errors are often consequences of
+  an earlier root cause several lines up.
+- When working across both the KiwiSDR source repo and this cloud repo in the
+  same session, use `/add-dir` to add the source repo so Claude can read both
+  without switching sessions.
+
+---
+
 ## Retrieving a Previous Build
 
 ```bash
