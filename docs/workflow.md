@@ -181,3 +181,14 @@ gsutil ls "gs://$(cd infra && terraform output -raw artifacts_bucket)/"
 ```
 
 Artifacts are kept for 90 days (configured in `infra/environments/dev.yml`).
+
+## Linting Scripts
+
+Before pushing changes to any `scripts/` file, run:
+
+```bash
+make lint
+```
+
+This runs `shellcheck` over all shell scripts and reports any issues. Install
+shellcheck with `brew install shellcheck` if you don't have it.
