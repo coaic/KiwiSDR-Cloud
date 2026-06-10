@@ -1,3 +1,10 @@
+# dev.yml — development environment config
+# First-time setup order:
+#   1. Edit this file (fill in project_id, submitter_email)
+#   2. Run: ./scripts/setup-gcp.sh  (creates project, billing, state bucket)
+#   3. Run: ./tf.sh dev init
+#   4. Run: ./tf.sh dev apply
+
 project_id: kiwisdr-fpga-builds
 region: australia-southeast1
 environment: dev
