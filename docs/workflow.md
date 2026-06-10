@@ -160,9 +160,10 @@ missed bug would mean another full build cycle or a broken bitstream.
 
 - Claude has no local Vivado installation and cannot run synthesis — it works
   from source files and build logs, not from running Vivado itself.
-- For timing analysis, download the `.rpt` files from GCS alongside the `.bit`
-  and point Claude at them; they contain far more detail than the build log
-  summary.
+- Any file uploaded to GCS is directly accessible to Claude via `gsutil cat` —
+  you don't need to download `.rpt` or `.bit` files locally first. Just give
+  Claude the job name and it can fetch and analyse the timing reports directly
+  from `gs://kiwisdr-fpga-builds-fpga-artifacts/<job>/`.
 - If a build fails with a cryptic Vivado message, paste the full surrounding
   context (not just the error line) — Vivado errors are often consequences of
   an earlier root cause several lines up.

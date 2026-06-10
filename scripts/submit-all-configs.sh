@@ -103,7 +103,7 @@ cd /build
 time vivado -mode batch -source make_proj.tcl \\
   -tclargs --result_dir /build \${TCL_FLAG} || BUILD_FAILED=1
 
-for f in /build/KiwiSDR.*.bit; do
+for f in /build/KiwiSDR.*.bit /build/KiwiSDR.*.rpt; do
   [ -f "\$f" ] && gcs_upload "\$f" "${JOB_NAME}/\${RX_CFG}/\$(basename \$f)"
 done
 
