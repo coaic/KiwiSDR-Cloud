@@ -83,11 +83,14 @@ met, what the Worst Negative Slack is, and what to change if it isn't.
 
 ## 5. Iterate
 
-If timing fails or the build errors:
+If timing fails or the build errors, ask Claude:
 
-1. Check `build.log` for the first `ERROR:` line
-2. Fix in RTL, push to fork
-3. Re-submit from step 2
+```
+why did job kiwisdr-20260101-120000 fail?
+```
+
+Claude fetches the build log from GCS, identifies the root cause, and suggests
+a fix. Then: edit RTL, push to fork, re-submit from step 2.
 
 See `docs/troubleshooting.md` for common failure patterns.
 
