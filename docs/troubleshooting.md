@@ -69,10 +69,9 @@ binding. If still failing, check `service_account_email` is set in
 **Cause:** The bake VM has no external IP (`noExternalIpAddress` is the default
 in some configs). Packer needs SSH access to the VM.
 
-**Fix:** The googlecompute Packer plugin uses IAP tunnelling automatically when
-there is no external IP if `use_iap = true` is set. Alternatively, confirm
-Private Google Access is enabled on the subnet (Terraform networking module
-handles this).
+**Fix:** Confirm Private Google Access is enabled on the subnet (Terraform
+networking module handles this). The Packer bake VM in this project gets an
+external IP by default, so direct SSH should work without `use_iap`.
 
 ---
 

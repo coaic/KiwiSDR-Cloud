@@ -43,8 +43,10 @@ gcloud iam service-accounts create fpga-builder \
 
 SA_EMAIL="fpga-builder@${PROJECT_ID}.iam.gserviceaccount.com"
 
-gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-  --member="serviceAccount:${SA_EMAIL}" --role="roles/storage.objectAdmin"
+# Scope objectAdmin to the artifacts bucket only (not project-wide).
+# Terraform manages this binding with the same scope — run tf apply after this script.
+gsutil iam ch "serviceAccount:${SA_EMAIL}:roles/storage.objectAdmin" \
+  "gs://${PROJECT_ID}-fpga-artifacts"
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${SA_EMAIL}" --role="roles/batch.agentReporter"
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
