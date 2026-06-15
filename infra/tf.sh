@@ -28,7 +28,7 @@ fi
 
 # Merge base config with local overrides into a single temp file.
 # dev.local.yml (gitignored) overrides dev.yml — put your real project_id there.
-MERGED=$(mktemp /tmp/tfvars.XXXXXX.json)
+MERGED="/tmp/tf-merged-$$.json"
 trap 'rm -f "${MERGED}"' EXIT
 
 if [[ -f "${LOCAL_CONFIG}" ]]; then
@@ -57,7 +57,7 @@ if [[ "${CMD}" == "init" ]]; then
 fi
 
 # Strip tfstate_bucket (not a Terraform variable) before passing to plan/apply/destroy.
-VARFILE=$(mktemp /tmp/tfvars.XXXXXX.json)
+VARFILE="/tmp/tf-varfile-$$.json"
 trap 'rm -f "${VARFILE}"' EXIT
 yq 'del(.tfstate_bucket)' "${MERGED}" -o=json > "${VARFILE}"
 
