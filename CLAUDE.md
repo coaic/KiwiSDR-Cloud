@@ -59,9 +59,29 @@ KiwiSDR-Cloud/
 | Artifacts bucket | `kiwisdr-fpga-builds-fpga-artifacts` | 90-day lifecycle |
 | Installer bucket | `kiwisdr-fpga-installer` | Permanent |
 | Terraform state | `kiwisdr-fpga-builds-fpga-tfstate` | Versioned |
-| Image family | `vivado-2024-2` | Ubuntu 20.04 Pro + Vivado 2024.2 ML Standard |
+| Image family | `vivado-2024-2` | Ubuntu 20.04 Pro + Vivado 2024.2 ML Standard. **Baked on demand — not kept persistently** (see Image Lifecycle below) |
 | Service account | `fpga-builder@kiwisdr-fpga-builds.iam.gserviceaccount.com` | No key file |
 | Cloud NAT | `fpga-build-nat` | Outbound internet for git clone |
+
+## Image Lifecycle
+
+The `vivado-2024-2` custom image (~300 GB) is **not kept in GCP between work
+cycles** — at ~$0.05/GB/mo it costs ~$15/mo idle, and this repo is used
+infrequently. Instead it is baked on demand:
+
+- **Before a cycle of work**: bake the image once with the `packer build`
+  command in the Quick Reference above. It joins the `vivado-2024-2` family,
+  and the build scripts (`submit-build.sh`, `submit-all-configs.sh`) that
+  reference the family then work unchanged.
+- **During a cycle**: keep the image. Do **not** delete it while a series of
+  changes is still in progress or a revisit is likely soon.
+- **After a cycle**: once the work is complete and the repo won't be revisited
+  for weeks or months, delete the image to stop the storage cost:
+  `gcloud compute images delete <image-name> --project=kiwisdr-fpga-builds`.
+- **Rule for Claude**: never delete the image unprompted. Ask the user whether
+  they've finished the cycle before deleting.
+
+The image is not managed by Terraform, so deleting it causes no `tf` drift.
 
 ## Vivado Target
 
